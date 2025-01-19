@@ -1,5 +1,6 @@
 # godot-pub-sub
-Publish-Subscribe mechanism for Godot/GDScript. Written using Godot 3.2, but should work with previous versions.
+
+Publish-Subscribe mechanism for Godot/GDScript. Written using Godot 4.3.
 
 PubSub is a powerful programming pattern that allows decoupled components to subscribe to messages that interest them and receive notifications when those messages are published. See the [Publish-Subscribe Pattern](https://en.wikipedia.org/wiki/Publish%E2%80%93subscribe_pattern) Wikipedia page for more information.
 
@@ -13,7 +14,7 @@ The biggest benefit of publish-subscribe is that components can communicate with
 
 1 Copy the **godot-pub-sub** folder to your projects addons folder
 
-2 Choose **Project* menu -> **Project Settings** -> **Auto Load**
+2 Choose **Project* menu -> **Project Settings** -> **Global** -> **Auto Load**
 
 3 Add the `PubSub` class to the list
 
@@ -43,15 +44,18 @@ This code publishes the discovery of an item - objects subscribed to the event c
 
 ## Instant Events
 
-PubSub also includes a slightly different form of event publishing, called an "instant" event. When an instant event is published, all listeners are called and their response collated into an Array. This is then returned to the object which published the event. Instant events provide a way for objects to obtain information from other objects without having a reference to them; this can be useful when such a reference causea a circular reference.
+PubSub also includes a slightly different form of event publishing, called an "instant" event. When an instant event is published, `instant_event_published()` method is called and their response collated into an Array. This is then returned to the object which published the event. Instant events provide a way for objects to obtain information from other objects without having a reference to them; this can be useful when such a reference causea a circular reference.
 
 ## Asynchronous Events
 
-PubSub usually publishes events to all listeners in one go when you call `publish()`. Another method, `publish_async()`, does not immediately call subscribers. Instead, it notes which subscribers need to be called and returns without calling them. Subscribers are subsequently called when the `PubSub.process()` method is called, one subscriber per call. You **must** call `PubSub.process()` somewhere in your main scene for this mechanism to work. It's up to you how often to call this method, however, so you can publish these asynchronous events every 1/10th of a second, for example.
+PubSub usually publishes events to all listeners in one go when you call `publish()`. Another method, `publish_async()`, does not immediately call subscribers. Instead, it notes which subscribers need to be called and returns without calling them. Subscribers are subsequently called when the `PubSub.process_async()` method is called, one subscriber per call. You **must** call `PubSub.process_async()` somewhere in your main scene for this mechanism to work. It's up to you how often to call this method, however, so you can publish these asynchronous events every 1/10th of a second, for example.
+
+The `PubSub.process_async()` method returns true, if there are any remaining subscribers to be called.
+The `PubSub.process_async_all()` method publishes to all subscribers.
 
 ## Methods
 
-`subscribe(event_key, listener)`
+`subscribe(listener, event_key)`
 
 Call the `subscribe()` method to subscribe the `listener` object to the given `event_key`. When the given event key is published, the `listener.event_published()` method will be called. If the method is not defined, nothing will happen.
 
@@ -65,7 +69,7 @@ Unsubscribe `listener` from the given `event_key`, or all events if `event_key` 
 
 Publishes an event to all listeners subscribed to `event_key`. The `event_published()` method of all listeners will be called (if they have one), with the `event_key` and optional `payload` parameter passed in. `payload` can be anything you need it to be - dictionaries are useful for passing a number of items of data.
 
-`subscribe_instant(event_key, listener)`
+`subscribe_instant(listener, event_key)`
 
 Subscribes `listener` to an instant `event_key`.
 
@@ -144,7 +148,7 @@ class_name Monster
 var hit_points:int = 80
 
 func _init():
-	PubSub.subscribe("player_xp_gained", self)
+	PubSub.subscribe(self, "player_xp_gained")
 
 func queue_free():
 	PubSub.unsubscribe(self)
